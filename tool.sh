@@ -12,19 +12,24 @@ function usage {
     $ $tool deps      Install dependencies for joe
     $ $tool build     Build a binary
     $ $tool run       Build and run the binary
+    $ $tool release   Build binarys for all platforms
 EOF
   exit 1;
 }
 
 
 function build {
-  GOOS=windows GOARCH=386 go build -o build/joe-x86.exe joe.go utils.go
-  GOOS=windows GOARCH=amd64 go build -o build/joe.exe joe.go utils.go
-  GOOS=linux GOARCH=386 go build -o build/joe-x86 joe.go utils.go
-  GOOS=linux GOARCH=amd64 go build -o build/joe joe.go utils.go
-  GOOS=darwin GOARCH=386 go build -o build/joe-darwin-x86 joe.go utils.go
-  GOOS=darwin GOARCH=amd64 go build -o build/joe-darwin joe.go utils.go
-  printf 'joe built\n';
+	if [ "$1" == '--all' ]; then
+		GOOS=windows GOARCH=386 go build -o build/joe-x86.exe joe.go utils.go
+		GOOS=windows GOARCH=amd64 go build -o build/joe.exe joe.go utils.go
+		GOOS=linux GOARCH=386 go build -o build/joe-x86 joe.go utils.go
+		GOOS=linux GOARCH=amd64 go build -o build/joe joe.go utils.go
+		GOOS=darwin GOARCH=386 go build -o build/joe-darwin-x86 joe.go utils.go
+		GOOS=darwin GOARCH=amd64 go build -o build/joe-darwin joe.go utils.go
+	else
+		go build -o joe joe.go utils.go
+	fi	
+	printf 'joe built\n';
 }
 
 
@@ -47,6 +52,8 @@ elif [ "$1" == "build" ]; then
   build
 elif [ "$1" == "run" ]; then
   build && ./joe
+elif [ "$1" == "release" ]; then
+  build --all
 else
   usage;
 fi

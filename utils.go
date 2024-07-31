@@ -2,12 +2,14 @@ package main
 
 import (
 	"archive/zip"
-	"github.com/termie/go-shutil"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/termie/go-shutil"
 )
 
 func unzip(archive, target string) (err error) {
@@ -50,6 +52,7 @@ func unzip(archive, target string) (err error) {
 func DownloadFiles(url string, dataPath string) (err error) {
 	archivePath := path.Join("/tmp", "master.zip")
 
+	fmt.Println("os create", archivePath)
 	// Create the file
 	out, err := os.Create(archivePath)
 	if err != nil {
@@ -57,6 +60,7 @@ func DownloadFiles(url string, dataPath string) (err error) {
 	}
 	defer out.Close()
 
+	fmt.Println("http", url)
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
