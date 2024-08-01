@@ -1,4 +1,4 @@
-module github.com/leitiannet/git-ignore
+module github.com/leitiannet/joe
 
 go 1.20
 
