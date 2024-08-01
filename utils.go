@@ -8,21 +8,26 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/termie/go-shutil"
 )
 
-func unzip(archive, target string) (err error) {
+func unzip(archive, target string) (rootDir string, err error) {
 	reader, err := zip.OpenReader(archive)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if err := os.MkdirAll(target, 0755); err != nil {
-		return err
+		return "", err
 	}
 
 	for _, file := range reader.File {
+		if rootDir == "" {
+			rootDir = strings.Split(file.Name, string(filepath.Separator))[0]
+			rootDir = filepath.Base(rootDir)
+		}
 		path := filepath.Join(target, file.Name)
 		if file.FileInfo().IsDir() {
 			os.MkdirAll(path, file.Mode())
@@ -31,26 +36,29 @@ func unzip(archive, target string) (err error) {
 
 		fileReader, err := file.Open()
 		if err != nil {
-			return err
+			return "", err
 		}
 		defer fileReader.Close()
 
 		targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 		if err != nil {
-			return err
+			return "", err
 		}
 		defer targetFile.Close()
 
 		if _, err := io.Copy(targetFile, fileReader); err != nil {
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return rootDir, nil
 }
 
+// Windows output: "open /tmp/master.zip: The system cannot find the path specified."
+var tempDir string = os.TempDir()
+
 func DownloadFiles(url string, dataPath string) (err error) {
-	archivePath := path.Join("/tmp", "master.zip")
+	archivePath := path.Join(tempDir, "master.zip")
 
 	fmt.Println("os create", archivePath)
 	// Create the file
@@ -74,13 +82,17 @@ func DownloadFiles(url string, dataPath string) (err error) {
 		return err
 	}
 
+	var gitignoreDir string = "gitignore-master" // maybe gitignore-main
 	// Unzip
-	err = unzip(archivePath, "/tmp")
+	rootDir, err := unzip(archivePath, tempDir)
 	if err != nil {
 		return err
 	}
+	if rootDir != "" {
+		gitignoreDir = rootDir
+	}
 
-	err = shutil.CopyTree(path.Join("/tmp", "gitignore-master"), dataPath, nil)
+	err = shutil.CopyTree(path.Join(tempDir, gitignoreDir), dataPath, nil)
 	if err != nil {
 		return err
 	}
